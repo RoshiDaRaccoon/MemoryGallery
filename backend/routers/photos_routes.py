@@ -6,6 +6,7 @@ import service
 import uuid
 import json
 from schemas import PhotoCreateRequest, PhotoCreateResponse, PhotoReadRequest, PhotoReadResponse, PhotoUpdateRequest, PhotoUpdateResponse, PhotoDeleteRequest, PhotoDeleteResponse, ErrorResponse
+from auth_utils import bearer_scheme, decode_token
 
 
 photos_router = APIRouter(prefix="/photos", tags=["Photos"])
@@ -15,13 +16,17 @@ photos_router = APIRouter(prefix="/photos", tags=["Photos"])
         tags=["Photos"],
         summary="Загрузить фото",
         description="Загрузка фото в систему")
-async def upload_photo(photo_data_json: str = Form(...), file: UploadFile = File(...), session: AsyncSession = Depends(get_session)):
+async def upload_photo(photo_data_json: str = Form(...), file: UploadFile = File(...), session: AsyncSession = Depends(get_session), credentials = Depends(bearer_scheme)):
     # Парсим JSON обратно в модель для валидации
     photo_data_dict = json.loads(photo_data_json)
     photo_data = PhotoCreateRequest(**photo_data_dict)
 
+    token = credentials.credentials
+    payload = decode_token(token, token_type="access")
+    user_email = payload["sub"]
+
     photo_service = service.PhotoService()
-    return await photo_service.upload_photo(photo_data, file=file, session=session)
+    return await photo_service.upload_photo(photo_data, user_email=user_email, file=file, session=session)
 
 @photos_router.get("/",
         response_model=list[PhotoReadResponse], 
@@ -54,23 +59,13 @@ async def get_photo(photo_id: int = Path(..., title="ID фото", description="
         })
 async def update_photo(photo_data: PhotoUpdateRequest, 
                     photo_id: int = Path(...,  title="ID фото",
-                                        description="Уникальный идентификатор фото"), session: AsyncSession = Depends(get_session)):
-    photo_service = service.PhotoService()
-    return await photo_service.update_photo(photo_id, photo_data, session=session)
+                                        description="Уникальный идентификатор фото"), session: AsyncSession = Depends(get_session), credentials = Depends(bearer_scheme)):
+    token = credentials.credentials
+    payload = decode_token(token, token_type="access")
+    user_email = payload["sub"]
 
-@photos_router.put("/{photo_id}",
-        response_model=PhotoUpdateResponse,
-        tags=["Photos"], 
-        summary="Обновить фото", 
-        description="Обновляет данные существующего фото",
-        responses={
-            404: {"model": ErrorResponse, "description": "Фото не найдено"}
-        })
-async def update_photo(photo_data: PhotoUpdateRequest, 
-                    photo_id: int = Path(...,  title="ID фото",
-                                        description="Уникальный идентификатор фото"), session: AsyncSession = Depends(get_session)):
     photo_service = service.PhotoService()
-    return await photo_service.update_photo(photo_id, photo_data, session=session)
+    return await photo_service.update_photo(photo_id, photo_data, user_email=user_email, session=session)
 
 @photos_router.delete("/{photo_id}",
             response_model=PhotoDeleteResponse,
@@ -81,7 +76,11 @@ async def update_photo(photo_data: PhotoUpdateRequest,
                 404: {"model": ErrorResponse, "description": "Фото не найдено"}
             })
 async def delete_photo(photo_id: int = Path(...,  title="ID фото",
-                                        description="Уникальный идентификатор фото"), session: AsyncSession = Depends(get_session)):
+                                        description="Уникальный идентификатор фото"), session: AsyncSession = Depends(get_session), credentials = Depends(bearer_scheme)):
+    token = credentials.credentials
+    payload = decode_token(token, token_type="access")
+    user_email = payload["sub"]
+
     photo_service = service.PhotoService()
     photo = await photo_service.get_photo_by_id(photo_id, session=session)
-    return await photo_service.delete_photo(photo_id, photo.path, session=session)
+    return await photo_service.delete_photo(photo_id, photo.path, user_email=user_email, session=session)

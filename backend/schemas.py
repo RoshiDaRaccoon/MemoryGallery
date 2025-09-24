@@ -17,7 +17,6 @@ class UserModel(BaseModel):
     last_name: str = Field(..., description="Фамилия пользователя")
     email: str = Field(..., description="Электронная почта пользователя")
     password_hashed: str = Field(..., description="Хэшированный пароль пользователя")
-    role: str = Field(..., description="Роль пользователя")
     is_active: bool = Field(..., description="Статус активности пользователя")
     
     model_config = {
@@ -28,7 +27,6 @@ class UserModel(BaseModel):
                 "last_name": "Doe",
                 "email": "john.doe@example.com",
                 "password_hashed": "Password123",
-                "role": "admin",
                 "is_active": True
             }
         }
@@ -39,7 +37,6 @@ class UserCreateRequest(BaseModel):
     last_name: str = Field(..., description="Фамилия пользователя")
     email: str = Field(..., description="Электронная почта пользователя")
     password: str = Field(..., description="Пароль пользователя")
-    role: str = Field(..., description="Роль пользователя")
 
     @field_validator('password')
     @classmethod
@@ -65,8 +62,7 @@ class UserCreateRequest(BaseModel):
                 "first_name": "John",
                 "last_name": "Doe",
                 "email": "john.doe@example.com",
-                "password": "Password123",
-                "role": "admin"
+                "password": "Password123"
             }
         }
     }
@@ -155,7 +151,6 @@ class UserReadResponse(BaseModel):
     last_name: str = Field(..., description="Фамилия пользователя")
     email: str = Field(..., description="Электронная почта пользователя")
     password_hashed: str = Field(..., description="Хэшированный пароль пользователя")
-    role: str = Field(..., description="Роль пользователя")
     is_active: bool = Field(..., description="Статус активности пользователя")
     
     model_config = {
@@ -166,7 +161,6 @@ class UserReadResponse(BaseModel):
                 "last_name": "Doe",
                 "email": "john.doe@example.com",
                 "password_hashed": "$2b$12$omkbnYhVkqFulQiFv5GV3.dDmrTNtZwYa.qWIEyz.s.8owZcaEWL.",
-                "role": "admin",
                 "is_active": True
             }
         }

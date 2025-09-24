@@ -23,7 +23,6 @@ class UserService:
             last_name=user_data.last_name,
             email=user_data.email,
             password_hashed=await hash_password(user_data.password),
-            role=user_data.role,
             is_active=True
         )
         try:
@@ -93,8 +92,14 @@ class UserService:
 class PhotoService:
     def __init__(self):
         self.repository = PhotoRepository()
+        self.user_repository = UserRepository()
 
-    async def upload_photo(self, photo_data: schemas.PhotoCreateRequest, file: UploadFile, session: AsyncSession):
+    async def upload_photo(self, photo_data: schemas.PhotoCreateRequest, user_email: str, file: UploadFile, session: AsyncSession):
+        # Проверка на то, что фото добавляет существующий пользователь (админ)
+        user = await self.user_repository.get_by_email(user_email, session)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found. Cannot upload photo without user")
+        
         # Проверка на правильность расширения файла
         extensions = [".png", ".jpg", ".jpeg", ".raw", ".tiff"]
         _, file_extension = os.path.splitext(file.filename)
@@ -148,14 +153,24 @@ class PhotoService:
             raise HTTPException(status_code=404, detail="Photo not found")
         return photo
 
-    async def update_photo(self, photo_id: int, photo_data: schemas.PhotoUpdateRequest, session: AsyncSession):
+    async def update_photo(self, photo_id: int, photo_data: schemas.PhotoUpdateRequest, user_email: str, session: AsyncSession):
+        # Проверка на то, что фото обновляет существующий пользователь (админ)
+        user = await self.user_repository.get_by_email(user_email, session)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found. Cannot update photo without user")
+        
         update_data = {"date": photo_data.date, "description": photo_data.description, "grade": photo_data.grade, "parallel": photo_data.parallel, "updated_at": datetime.now(timezone.utc)}
         updated_photo = await self.repository.update(photo_id, update_data, session)
         if not updated_photo:
             raise HTTPException(status_code=404, detail="Photo not found")
         return {"message": "Photo updated successfully"}
 
-    async def delete_photo(self, photo_id: int, path: str, session: AsyncSession):
+    async def delete_photo(self, photo_id: int, path: str, user_email: str, session: AsyncSession):
+        # Проверка на то, что фото удаляет существующий пользователь (админ)
+        user = await self.user_repository.get_by_email(user_email, session)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found. Cannot delete photo without user")
+        
         result = await self.repository.delete(photo_id, session)
         if result["message"] == "Photo not found":
             raise HTTPException(status_code=404, detail="Photo not found")
