@@ -8,15 +8,48 @@ import auth_utils
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
+@router.post("/register/first",
+            response_model=Token,
+            tags=["Auth"], 
+            summary="Регистрация первого пользователя")
+async def register_first(user_data: UserCreateRequest, key: str, session: AsyncSession = Depends(get_session)):
+    """Регистрация первого пользователя"""
+    user_service = UserService()
+    check = await user_service.get_all_users(session=session)
+    if check:
+        raise HTTPException(status_code=403, detail="Another admin already exists")
+    elif key != auth_utils.MASTER_ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=403, detail="Invalid master secret key")
+    else:
+        await user_service.create_user(user_data, session=session)
+        access_token = auth_utils.create_access_token(user_data.email)
+        refresh_token = auth_utils.create_refresh_token(user_data.email)
+        # Сохраняем refresh_token в базе
+        await user_service.update_user_refresh_token(user_data.email, refresh_token, session=session)
+        return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+
 @router.post("/register",
-            response_model=list[UserCreateResponse],
+            response_model=Token,
             tags=["Auth"], 
             summary="Регистрация пользователя")
-async def register(user_data: UserCreateRequest, session: AsyncSession = Depends(get_session)):
-    """Регистрация нового пользователя"""
+async def register(user_data: UserCreateRequest, session: AsyncSession = Depends(get_session), credentials = Depends(auth_utils.bearer_scheme)):
+    """Регистрация нового пользователя от лица существующего"""
+
+    # Получаем пользователя из access_token
+    token = credentials.credentials
+    payload = auth_utils.decode_token(token, token_type="access")
+
     user_service = UserService()
-    result = await user_service.create_user(user_data, session=session)
-    return result
+    user = await user_service.get_user_by_email(payload["sub"], session=session)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid user")
+    
+    await user_service.create_user(user_data, session=session)
+    access_token = auth_utils.create_access_token(user_data.email)
+    refresh_token = auth_utils.create_refresh_token(user_data.email)
+    # Сохраняем refresh_token в базе
+    await user_service.update_user_refresh_token(user_data.email, refresh_token, session=session)
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 @router.post("/login",
             tags=["Auth"],
@@ -53,10 +86,10 @@ async def refresh_token(token_data: TokenRefresh, session: AsyncSession = Depend
 @router.post("/logout",
             tags=["Auth"],
             summary="Выход из системы")
-async def logout(request: Request, session: AsyncSession = Depends(get_session)):
+async def logout(session: AsyncSession = Depends(get_session), credentials = Depends(auth_utils.bearer_scheme)):
     """Выход из системы"""
     # Получаем пользователя из access_token
-    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    token = credentials.credentials
     payload = auth_utils.decode_token(token, token_type="access")
     user_service = UserService()
     await user_service.update_user_refresh_token(payload["sub"], None, session=session)

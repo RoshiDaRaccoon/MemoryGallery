@@ -7,6 +7,7 @@ from typing import Optional
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 
 SECRET_KEY = "supersecretkey_change_me"
+MASTER_ADMIN_SECRET_KEY = "another_supersecretkey_change_me_please"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7
