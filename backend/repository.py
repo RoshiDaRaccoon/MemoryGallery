@@ -31,9 +31,10 @@ class BaseRepository(ABC, Generic[T]):
         result = await session.execute(select(self.model).where(self.model.id == id))
         return result.scalars().first()
 
-    async def get_all(self, session: AsyncSession) -> list[T]:
-        """Получает все сущности."""
-        result = await session.execute(select(self.model))
+    async def get_all(self, session: AsyncSession, limit: int = 20, offset: int = 0) -> list[T]:
+        """Получает все сущности с поддержкой пагинации."""
+        query = select(self.model).offset(offset).limit(limit)
+        result = await session.execute(query)
         return result.scalars().all()
 
     async def update(self, entity_or_id: Union[T, int], data: Optional[Dict[str, Any]] = None, session: AsyncSession = None) -> Optional[T]:
@@ -89,6 +90,10 @@ class UserRepository(BaseRepository[User]):
         if not user:
             return None
         user.refresh_token = refresh_token
+        if refresh_token == None:
+            user.is_active = False
+        else:
+            user.is_active = True
         await session.commit()
         await session.refresh(user)
         return user

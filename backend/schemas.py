@@ -80,11 +80,11 @@ class UserCreateResponse(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
-    id: int = Field(None, description="Уникальный идентификатор пользователя")
+    id: int = Field(..., description="Уникальный идентификатор пользователя")
     first_name: str = Field(..., description="Имя пользователя")
     last_name: str = Field(..., description="Фамилия пользователя")
     email: str = Field(..., description="Электронная почта пользователя")
-    password: str = Field(..., description="Пароль пользователя")
+    password: Optional[str] = Field(None, description="Пароль пользователя")
 
     @field_validator('password')
     @classmethod
@@ -200,9 +200,9 @@ class PhotoModel(BaseModel):
     id: int = Field(..., description="Уникальный идентификатор фото")
     date: datetime = Field(..., description="Дата фото")
     path: str = Field(..., description="Путь к фото")
-    description: str = Field(..., description="Описание фото")
-    grade: int = Field(..., description="Класс на фото")
-    parallel: str = Field(..., description="Буква параллели класса на фото")
+    description: Optional[str] = Field(None, description="Описание фото")
+    grade: Optional[int] = Field(None, description="Класс на фото")
+    parallel: Optional[str] = Field(None, description="Буква параллели класса на фото")
     created_at: datetime = Field(..., description="Дата создания фото")
     updated_at: datetime = Field(..., description="Дата обновления фото")
 
@@ -223,9 +223,9 @@ class PhotoModel(BaseModel):
 
 class PhotoCreateRequest(BaseModel):
     date: datetime = Field(..., description="Дата фото")
-    description: str = Field(..., description="Описание фото")
-    grade: int = Field(..., description="Класс на фото")
-    parallel: str = Field(..., description="Буква параллели класса на фото")
+    description: Optional[str] = Field(None, description="Описание фото")
+    grade: Optional[int] = Field(None, description="Класс на фото")
+    parallel: Optional[str] = Field(None, description="Буква параллели класса на фото")
 
     @field_validator('grade')
     @classmethod
@@ -282,9 +282,9 @@ class PhotoReadResponse(BaseModel):
     id: int = Field(..., description="Уникальный идентификатор фото")
     date: datetime = Field(..., description="Дата фото")
     path: str = Field(..., description="Путь к фото")
-    description: str = Field(..., description="Описание фото")
-    grade: int = Field(..., description="Класс на фото")
-    parallel: str = Field(..., description="Буква параллели класса на фото")
+    description: Optional[str] = Field(None, description="Описание фото")
+    grade: Optional[int] = Field(None, description="Класс на фото")
+    parallel: Optional[str] = Field(None, description="Буква параллели класса на фото")
     created_at: datetime = Field(..., description="Дата создания фото")
     updated_at: datetime = Field(..., description="Дата обновления фото")
     
@@ -304,10 +304,28 @@ class PhotoReadResponse(BaseModel):
     }
 
 class PhotoUpdateRequest(BaseModel):
-    date: datetime = Field(..., description="Дата фото")
-    description: str = Field(..., description="Описание фото")
-    grade: int = Field(..., description="Класс на фото")
-    parallel: str = Field(..., description="Буква параллели класса на фото")
+    date: Optional[datetime] = Field(None, description="Дата фото")
+    description: Optional[str] = Field(None, description="Описание фото")
+    grade: Optional[int] = Field(None, description="Класс на фото")
+    parallel: Optional[str] = Field(None, description="Буква параллели класса на фото")
+
+    @field_validator('grade')
+    @classmethod
+    def validate_grade(cls, v):
+        if v is None:
+            return v
+        if not (v > 0 and v < 12):
+            raise ValueError("Invalid grade")
+        return v
+    
+    @field_validator('parallel')
+    @classmethod
+    def validate_parallel(cls, v):
+        if v is None:
+            return v
+        if not (re.match(r'^[А-Я]$', v) and len(v) == 1):
+            raise ValueError("Invalid parallel")
+        return v
 
     model_config = {
         "json_schema_extra": {
@@ -367,7 +385,8 @@ class ErrorResponse(BaseModel):
 
 class Token(BaseModel):
     access_token: str
-    refresh_token: str
+    token_type: str
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
 
 class TokenRefresh(BaseModel):

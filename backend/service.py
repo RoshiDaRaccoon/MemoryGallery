@@ -132,8 +132,8 @@ class PhotoService:
             error_msg = str(e.orig)
             raise HTTPException(status_code=400, detail=f"Error uploading photo: {error_msg}")
     
-    async def get_all_photos(self, session: AsyncSession):
-        return await self.repository.get_all(session)
+    async def get_all_photos(self, session: AsyncSession, limit: int = 20, offset: int = 0):
+        return await self.repository.get_all(session, limit=limit, offset=offset)
     
     async def get_photo_by_id(self, photo_id: int, session: AsyncSession):
         photo = await self.repository.get_by_id(photo_id, session)

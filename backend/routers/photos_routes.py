@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Path, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Path, UploadFile, File, Form, Query
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_session
@@ -32,10 +32,10 @@ async def upload_photo(photo_data_json: str = Form(...), file: UploadFile = File
         response_model=list[PhotoReadResponse], 
         tags=["Photos"], 
         summary="Получить все фото", 
-        description="Возвращает список всех фото в системе")
-async def get_photos(session: AsyncSession = Depends(get_session)):
+        description="Возвращает список всех фото с использованием пагинации")
+async def get_photos(limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0), session: AsyncSession = Depends(get_session)):
     photo_service = service.PhotoService()
-    return await photo_service.get_all_photos(session=session)
+    return await photo_service.get_all_photos(session=session, limit=limit, offset=offset)
 
 @photos_router.get("/{photo_id}",
         response_model=PhotoReadResponse,

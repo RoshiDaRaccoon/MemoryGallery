@@ -16,6 +16,22 @@ async def get_users(session: AsyncSession = Depends(get_session)):
     user_service = service.UserService()
     return await user_service.get_all_users(session=session)
 
+@users_router.get("/me",
+        response_model=UserReadResponse,
+        tags=["Users"], 
+        summary="Получить текущего пользователя", 
+        description="Возвращает текущего пользователя")
+async def get_current_user(session: AsyncSession = Depends(get_session), credentials = Depends(bearer_scheme)):
+    # Получаем пользователя из access_token
+    token = credentials.credentials
+    payload = decode_token(token, token_type="access")
+    
+    user_service = service.UserService()
+    user = await user_service.get_user_by_email(payload["sub"], session=session)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
 @users_router.get("/{user_id}",
         response_model=UserReadResponse,
         tags=["Users"], 

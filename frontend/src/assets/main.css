@@ -1,0 +1,18 @@
+/* Прямое начертание */
+@font-face {
+    font-family: 'Rubik';
+    src: url('@/assets/fonts/Rubik-VariableFont_wght.ttf') format('truetype');
+    font-weight: 300 900;
+    /* Диапазон весов, доступный в Rubik */
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Курсив */
+@font-face {
+    font-family: 'Rubik';
+    src: url('@/assets/fonts/Rubik-Italic-VariableFont_wght.ttf') format('truetype');
+    font-weight: 300 900;
+    font-style: italic;
+    font-display: swap;
+}

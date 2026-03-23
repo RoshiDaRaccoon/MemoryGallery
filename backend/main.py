@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
+import os
 from typing import List
-from fastapi import FastAPI, Path, Depends, HTTPException
+from fastapi import FastAPI, Path, Depends, HTTPException, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import service as service_module
 import uvicorn
@@ -28,19 +30,33 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-app.swagger_ui_parameters = {
-    "usePkceWithAuthorizationCodeGrant": True,
-    "clientId": "your-client-id",
-}
+@app.middleware("http")
+async def add_cors_header(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, PUT, DELETE"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+app.swagger_ui_parameters = {
+    "usePkceWithAuthorizationCodeGrant": True,
+    "clientId": "your-client-id",
+}
+
+photos_dir_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "photos")
+if not os.path.exists(photos_dir_path):
+    os.makedirs(photos_dir_path, exist_ok=True)
+app.mount("/public-photos", StaticFiles(directory=photos_dir_path), name="public_photos")
 
 app.include_router(users_router)
 app.include_router(auth_router)
