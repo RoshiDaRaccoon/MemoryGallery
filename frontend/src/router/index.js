@@ -1,28 +1,28 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import AboutView from '../views/AboutView.vue'
-import ContactsView from '@/views/ContactsView.vue'
-import OfficialsView from '@/views/OfficialsView.vue'
-import GalleryView from '@/views/GalleryView.vue'
-import LoginView from '@/views/LoginView.vue'
-import AdminView from '@/views/AdminView.vue'
+import HomePage from '@/pages/HomePage.vue'
+import AboutPage from '@/pages/AboutPage.vue'
+import ContactsPage from '@/pages/ContactsPage.vue'
+import OfficialsPage from '@/pages/OfficialsPage.vue'
+import GalleryPage from '@/pages/GalleryPage.vue'
+import LoginPage from '@/pages/LoginPage.vue'
+import AdminPage from '@/pages/AdminPanel.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
-        { path: '/', component: HomeView },
-        { path: '/about', component: AboutView },
-        { path: '/contacts', component: ContactsView },
-        { path: '/gallery', component: GalleryView },
-        { path: '/officials', component: OfficialsView },
+        { path: '/', component: HomePage },
+        { path: '/about', component: AboutPage },
+        { path: '/contacts', component: ContactsPage },
+        { path: '/gallery', component: GalleryPage },
+        { path: '/officials', component: OfficialsPage },
         {
             path: '/login',
-            component: LoginView,
+            component: LoginPage,
             meta: { hideFooter: true }
         },
         {
             path: '/admin',
-            component: AdminView,
+            component: AdminPage,
             meta: {
                 requiresAuth: true,
                 hideFooter: true

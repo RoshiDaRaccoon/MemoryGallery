@@ -2,12 +2,13 @@ from models.user_model import User
 from models.photo_model import Photo
 import repository as repository
 import schemas as schemas
+from typing import Optional, List, Any, Dict
 from fastapi import HTTPException, File, UploadFile
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone
 from auth_utils import hash_password, verify_password
 from repository import UserRepository, PhotoRepository
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 import os
 import uuid
@@ -132,8 +133,28 @@ class PhotoService:
             error_msg = str(e.orig)
             raise HTTPException(status_code=400, detail=f"Error uploading photo: {error_msg}")
     
-    async def get_all_photos(self, session: AsyncSession, limit: int = 20, offset: int = 0):
-        return await self.repository.get_all(session, limit=limit, offset=offset)
+    async def get_all_photos(self,
+                             session: AsyncSession,
+                             limit: int = 20,
+                             offset: int = 0,
+                             grade: Optional[int] = None,
+                             parallel: Optional[str] = None,
+                             search: Optional[str] = None,
+                             date_from: Optional[datetime] = None,
+                             date_to: Optional[datetime] = None):
+        filters = []
+        if grade:
+            filters.append(Photo.grade == grade)
+        if parallel:
+            filters.append(Photo.parallel == parallel)
+        if date_from:
+            filters.append(Photo.date >= date_from)
+        if date_to:
+            filters.append(Photo.date <= date_to)
+        if search:
+            filters.append(func.py_lower(Photo.description).contains(search.lower()))
+        
+        return await self.repository.get_all(session, limit=limit, offset=offset, filters=filters)
     
     async def get_photo_by_id(self, photo_id: int, session: AsyncSession):
         photo = await self.repository.get_by_id(photo_id, session)

@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 import bcrypt
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -6,12 +8,14 @@ from fastapi import HTTPException, status, Request
 from typing import Optional
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 
-SECRET_KEY = "supersecretkey_change_me"
-MASTER_ADMIN_SECRET_KEY = "another_supersecretkey_change_me_please"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-REFRESH_TOKEN_EXPIRE_DAYS = 7
-CSRF_TOKEN_EXPIRE_HOURS = 1
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+MASTER_ADMIN_SECRET_KEY = os.getenv("MASTER_ADMIN_SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"))
+CSRF_TOKEN_EXPIRE_HOURS = int(os.getenv("CSRF_TOKEN_EXPIRE_HOURS"))
 
 # JWT
 

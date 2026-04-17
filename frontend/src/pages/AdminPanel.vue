@@ -1,5 +1,12 @@
 <script>
 import api from '@/api';
+import AddIcon from '../assets/icons/plus.svg?component'
+import EditIcon from '../assets/icons/pen.svg?component'
+import DeleteIcon from '../assets/icons/delete.svg?component'
+import AddAccount from '../assets/icons/add-account.svg?component'
+import AccountIcon from '../assets/icons/account.svg?component'
+import DoorExit from '../assets/icons/door-exit.svg?component'
+import TrashBin from '../assets/icons/trash-bin.svg?component'
 
 export default {
     data() {
@@ -256,6 +263,15 @@ export default {
                 hasDigit && hasUpper && hasLower
             );
         }
+    },
+    components: {
+        AddIcon,
+        EditIcon,
+        DeleteIcon,
+        AddAccount,
+        AccountIcon,
+        DoorExit,
+        TrashBin
     }
 }
 </script>
@@ -266,23 +282,18 @@ export default {
         <h1 class="gallery-title">Панель управления</h1>
 
         <!-- Главное меню выбора -->
-        <div v-if="!currentAction" class="d-flex flex-wrap justify-content-center gap-4">
-            <button @click="currentAction = 'add'" class="admin-main-btn">➕ Добавить фото</button>
-            <button @click="currentAction = 'update'" class="admin-main-btn">📝 Изменить данные</button>
-            <button @click="currentAction = 'delete'" class="admin-main-btn">🗑️ Удалить фото</button>
-            <button @click="currentAction = 'register'" class="admin-main-btn secondary">👤 Новый админ</button>
-
-            <button @click="currentAction = 'profile'; loadProfile()" class="admin-main-btn profile-btn">👤 Мой
-                профиль</button>
-
-            <!-- Кнопка Выхода -->
-            <button @click="handleLogout" class="admin-main-btn logout-btn" :disabled="loading">
-                🚪 {{ loading ? 'Выход...' : 'Выйти' }}
-            </button>
+        <div v-if="!currentAction" class="align-items-center">
+            <div class="row mb-4">
+                <div class="col-4"><button @click="currentAction = 'add'" class="admin-main-btn"><add-icon width="1.5em" height="autho" /> Добавить фото</button></div>
+                <div class="col-4"><button @click="currentAction = 'update'" class="admin-main-btn"><edit-icon width="1.5em" height="autho" /> Изменить фото</button></div>
+                <div class="col-4"><button @click="currentAction = 'delete'" class="admin-main-btn"><delete-icon width="1.5em" height="autho" /> Удалить фото</button></div>
+            </div>
+            <div class="row">
+                <div class="col-4"><button @click="currentAction = 'register'" class="admin-main-btn secondary"><add-account width="1.5em" height="autho" /> Новый админ</button></div>
+                <div class="col-4"><button @click="currentAction = 'profile'; loadProfile()" class="admin-main-btn profile-btn"><account-icon width="1em" height="autho" /> Мой профиль</button></div>
+                <div class="col-4"><button @click="handleLogout" class="admin-main-btn logout-btn" :disabled="loading"><door-exit width="1.5em" height="autho" /> <span>{{ loading ? 'Выход...' : 'Выйти' }}</span></button></div>
+            </div>
         </div>
-
-        <!-- Форма возврата -->
-        <button v-if="currentAction" @click="currentAction = null" class="btn btn-outline-light mb-4">⬅ Назад</button>
 
         <!-- Форма ДОБАВЛЕНИЯ -->
         <div v-if="currentAction === 'add'" class="admin-card p-4 col-12 col-md-6">
@@ -452,12 +463,14 @@ export default {
 
             <!-- Отдельная зона удаления -->
             <div class="danger-zone pt-3 border-top border-secondary mt-2">
-                <p class="text-danger small mb-2">Опасная зона</p>
-                <button @click="submitDeleteAccount" class="btn-delete-outline w-100" :disabled="loading">
-                    🗑️ Удалить мой аккаунт
+                <button @click="submitDeleteAccount" class="btn-delete-outline w-100 d-flex align-items-center justify-content-center gap-2" :disabled="loading">
+                    <trash-bin width="1.5em" height="autho" /> Удалить мой аккаунт
                 </button>
             </div>
         </div>
+        
+        <!-- Форма возврата -->
+        <button v-if="currentAction" @click="currentAction = null" class="btn btn-outline-light mb-4">⬅ Назад</button>
     </div>
 </template>
 
@@ -467,8 +480,12 @@ export default {
 }
 
 .admin-main-btn {
-    width: 250px;
-    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 13em;
+    height: 7em;
     background-color: #F2ECDF;
     color: #3F2B4C;
     border: 2px solid #3F2B4C;
@@ -540,7 +557,6 @@ export default {
 .admin-main-btn.logout-btn:hover {
     background-color: #ff6b6b;
     color: white;
-    transform: translateY(-5px);
 }
 
 .profile-btn {
@@ -550,7 +566,7 @@ export default {
 }
 
 .btn-action.delete {
-    background-color: #dc3545;
+    background-color: #ff6b6b;
     /* Красный для удаления */
 }
 
@@ -568,11 +584,11 @@ export default {
     padding: 0.5rem;
     border-radius: 8px;
     transition: all 0.3s ease;
-}
 
-.btn-delete-outline:hover {
-    background: #ff6b6b;
-    color: white;
+    &:hover {
+        background: #ff6b6b;
+        color: white;
+    }
 }
 
 .border-top {

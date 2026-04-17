@@ -9,6 +9,7 @@ export default {
         return {
             API_URL: 'http://localhost:8000/photos/',
             STATIC_FILES_BASE_URL: 'http://localhost:8000/public-photos/',
+            isAdmin: localStorage.getItem('access_token'), // true, если токен есть
             photos: [],
             loading: true,
             error: null,
@@ -18,7 +19,15 @@ export default {
             limit: 12,
             offset: 0,
             hasMore: true,
-            observer: null // Хранилище для наблюдателя
+            observer: null, // Хранилище для наблюдателя
+            filters: {
+                grade: null,
+                parallel: '',
+                search: '',
+                dateFrom: '',
+                dateTo: ''
+            },
+            loadingMore: false,
         }
     },
     computed: {
@@ -33,19 +42,45 @@ export default {
         }
     },
     methods: {
+        async applyFilters() {
+            this.photos = [];
+            this.offset = 0;
+            this.hasMore = true;
+            await this.fetchPhotos();
+        },
+        async resetFilters() {
+            this.filters = {
+                grade: null,
+                parallel: '',
+                search: '',
+                dateFrom: '',
+                dateTo: ''
+            },
+            this.photos = [];
+            this.offset = 0;
+            this.hasMore = true;
+            await this.fetchPhotos();
+        },
         async fetchPhotos() {
             if (!this.hasMore || this.loadingMore) return;
-
-            // Если это первая загрузка
-            if (this.photos.length === 0) this.loading = true;
-            else this.loadingMore = true;
+            this.loadingMore = true;
 
             try {
                 const response = await axios.get(this.API_URL, {
-                    params: { limit: this.limit, offset: this.offset }
+                    params: {
+                        limit: this.limit,
+                        offset: this.offset,
+                        // Передаем фильтры
+                        grade: this.filters.grade || null,
+                        parallel: this.filters.parallel || null,
+                        search: this.filters.search || null,
+                        date_from: this.filters.dateFrom || null,
+                        date_to: this.filters.dateTo || null
+                    }
                 });
 
                 const newPhotos = response.data;
+
                 this.photos = [...this.photos, ...newPhotos];
 
                 // Проверяем, есть ли что грузить дальше
@@ -137,11 +172,35 @@ export default {
     <div class="photo-gallery-container d-flex flex-column align-items-center gap-5">
         <img class="gallery-page-image" :src="image" alt="">
         <h1 class="gallery-title">Галерея фотографий</h1>
+        <div class="filters-container d-flex flex-wrap gap-3 mb-5 p-4 shadow-sm">
+            <input v-model="filters.search" placeholder="Поиск по описанию..." class="form-control filter-input search">
+
+            <select v-model="filters.grade" class="form-select filter-input">
+                <option :value="null">Все классы</option>
+                <option v-for="n in 11" :key="n" :value="n">{{ n }} класс</option>
+            </select>
+
+            <input v-model="filters.parallel" placeholder="Буква" class="form-control filter-input letter"
+                maxlength="1">
+
+            <div class="d-flex align-items-center gap-2">
+                <span>От:</span>
+                <input type="date" v-model="filters.dateFrom" class="form-control filter-input">
+                <span>До:</span>
+                <input type="date" v-model="filters.dateTo" class="form-control filter-input">
+            </div>
+
+            <button @click="applyFilters" class="btn-apply">Применить</button>
+            <button @click="resetFilters" class="btn-reset">Сбросить</button>
+        </div>
         <div v-if="!loading && !error">
             <MasonryWall :items="photos" :column-width="columnWidth" :gap="16">
                 <template #default="{ item, index }">
                     <div class="photo-card d-flex flex-column align-items-center" data-bs-toggle="modal"
                         :data-bs-target="'#modal-' + index">
+                        <div v-if="isAdmin" class="admin-id-badge">
+                            ID: {{ item.id }}
+                        </div>
                         <img :src="getImage(item)" :alt="item.description || `Фото ${item.id}`" class="photo-image" />
                         <p class="photo-date">{{ getDate(item) }}</p>
                         <p v-if="item.grade" class="photo-class">
@@ -228,6 +287,7 @@ export default {
 
 /* Стили карточки */
 .photo-card {
+    position: relative;
     background-color: rgb(242, 236, 223);
     border: 2px solid #3F2B4C;
     border-radius: 15px;
@@ -244,6 +304,21 @@ export default {
     &:hover img {
         border-color: #E0EDAB;
     }
+}
+
+.admin-id-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #3F2B4C; /* Твой фирменный темно-фиолетовый */
+  color: #E0EDAB;            /* Твой фирменный салатовый */
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  z-index: 10;
+  border: 1px solid #E0EDAB;
+  pointer-events: none;      /* Чтобы клик проходил сквозь бейдж на карточку */
 }
 
 .photo-image {

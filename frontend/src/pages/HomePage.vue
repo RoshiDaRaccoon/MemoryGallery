@@ -1,6 +1,6 @@
 <script>
 import { RouterLink } from 'vue-router'
-import ButtonPrimary from './ButtonPrimary.vue';
+import ButtonPrimary from '../components/ButtonPrimary.vue';
 export default {
     data() {
         return {

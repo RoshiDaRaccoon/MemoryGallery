@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Type, Optional, Dict, Any, Union
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.user_model import User
 from models.photo_model import Photo
@@ -31,9 +31,11 @@ class BaseRepository(ABC, Generic[T]):
         result = await session.execute(select(self.model).where(self.model.id == id))
         return result.scalars().first()
 
-    async def get_all(self, session: AsyncSession, limit: int = 20, offset: int = 0) -> list[T]:
-        """Получает все сущности с поддержкой пагинации."""
+    async def get_all(self, session: AsyncSession, limit: int = 20, offset: int = 0, filters: list = []) -> list[T]:
+        """Получает все сущности с поддержкой пагинации и фильтров."""
         query = select(self.model).offset(offset).limit(limit)
+        if filters:
+            query = query.where(and_(*filters))
         result = await session.execute(query)
         return result.scalars().all()
 

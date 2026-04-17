@@ -1,7 +1,7 @@
 <script>
 import { RouterView } from 'vue-router'
 import AppHeader from './components/AppHeader.vue';
-import HomePage from './components/HomePage.vue';
+import HomePage from './pages/HomePage.vue';
 import AppFooter from './components/AppFooter.vue';
 
 export default {

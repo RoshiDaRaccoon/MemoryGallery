@@ -3,6 +3,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_session
 import service
+from typing import Optional, List, Any, Dict
+from datetime import datetime, timezone
 import uuid
 import json
 from schemas import PhotoCreateRequest, PhotoCreateResponse, PhotoReadRequest, PhotoReadResponse, PhotoUpdateRequest, PhotoUpdateResponse, PhotoDeleteRequest, PhotoDeleteResponse, ErrorResponse
@@ -17,7 +19,8 @@ photos_router = APIRouter(prefix="/photos", tags=["Photos"])
         summary="Загрузить фото",
         description="Загрузка фото в систему")
 async def upload_photo(photo_data_json: str = Form(...), file: UploadFile = File(...), session: AsyncSession = Depends(get_session), credentials = Depends(bearer_scheme)):
-    # Парсим JSON обратно в модель для валидации
+    # FastAPI не любит, когда ему передают одновременно и файл, и много параметров, поэтому все параметры загоняются в JSON на клиенте перед отправкой запроса
+    # Парсим этот JSON обратно в модель для валидации
     photo_data_dict = json.loads(photo_data_json)
     photo_data = PhotoCreateRequest(**photo_data_dict)
 
@@ -33,9 +36,16 @@ async def upload_photo(photo_data_json: str = Form(...), file: UploadFile = File
         tags=["Photos"], 
         summary="Получить все фото", 
         description="Возвращает список всех фото с использованием пагинации")
-async def get_photos(limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0), session: AsyncSession = Depends(get_session)):
+async def get_photos(limit: int = Query(20, ge=1, le=100),
+                     offset: int = Query(0, ge=0),
+                     grade: Optional[int] = Query(None),
+                     parallel: Optional[str] = Query(None),
+                     search: Optional[str] = Query(None),
+                     date_from: Optional[datetime] = Query(None),
+                     date_to: Optional[datetime] = Query(None),
+                     session: AsyncSession = Depends(get_session)):
     photo_service = service.PhotoService()
-    return await photo_service.get_all_photos(session=session, limit=limit, offset=offset)
+    return await photo_service.get_all_photos(session, limit, offset, grade, parallel, search, date_from, date_to)
 
 @photos_router.get("/{photo_id}",
         response_model=PhotoReadResponse,
