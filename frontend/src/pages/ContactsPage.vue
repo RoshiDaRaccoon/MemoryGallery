@@ -33,7 +33,7 @@
     background: rgba(63, 43, 76, 0.85);
     border: 2px solid #E0EDAB;
     border-radius: 30px;
-    max-width: 800px;
+    max-width: 40vw;
     backdrop-filter: blur(5px);
 }
 </style>

@@ -50,8 +50,7 @@ class BaseRepository(ABC, Generic[T]):
             entity = await self.get_by_id(entity_or_id, session)
             if entity:
                 for key, value in data.items():
-                    if value is not None:
-                        setattr(entity, key, value)
+                    setattr(entity, key, value)
         
         if session and entity:
             await session.commit()

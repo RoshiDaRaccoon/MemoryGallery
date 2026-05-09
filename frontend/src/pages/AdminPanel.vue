@@ -22,6 +22,7 @@ export default {
                 parallel: '',
                 description: ''
             },
+            isPhotoLoaded: false,
             updateForm: {
                 id: null,
                 date: null,
@@ -53,6 +54,31 @@ export default {
             this.isDragging = false;
             this.uploadForm.file = e.dataTransfer.files[0];
         },
+        async fetchPhotoData() {
+            if (!this.updateForm.id) {
+                alert("Сначала введите ID фото");
+                return;
+            }
+            this.loading = true;
+            try {
+                const response = await api.get(`/photos/${this.updateForm.id}`);
+                const photo = response.data;
+
+                // Подставляем данные в форму
+                this.updateForm.date = photo.date.split('T')[0]; // Форматируем дату для <input type="date">
+                this.updateForm.grade = photo.grade;
+                this.updateForm.parallel = photo.parallel || '';
+                this.updateForm.description = photo.description || '';
+
+                this.isPhotoLoaded = true;
+            } catch (err) {
+                console.error(err);
+                alert("Фото с таким ID не найдено");
+                this.isPhotoLoaded = false;
+            } finally {
+                this.loading = false;
+            }
+        },
         resetForm(form) {
             if (form == 'upload') {
                 this.uploadForm = {
@@ -75,6 +101,7 @@ export default {
                     parallel: '',
                     description: ''
                 }
+                this.isPhotoLoaded = false
             } else if (form == 'register') {
                 this.registerForm = {
                     first_name: '',
@@ -286,26 +313,35 @@ export default {
         <!-- Главное меню выбора -->
         <div v-if="!currentAction" class="align-items-center">
             <div class="row mb-4">
-                <div class="col-4"><button @click="currentAction = 'add'" class="admin-main-btn"><add-icon width="1.5em" height="autho" /> Добавить фото</button></div>
-                <div class="col-4"><button @click="currentAction = 'update'" class="admin-main-btn"><edit-icon width="1.5em" height="autho" /> Изменить фото</button></div>
-                <div class="col-4"><button @click="currentAction = 'delete'" class="admin-main-btn"><delete-icon width="1.5em" height="autho" /> Удалить фото</button></div>
+                <div class="col-4"><button @click="currentAction = 'add'" class="admin-main-btn"><add-icon width="1.5em"
+                            height="autho" /> Добавить фото</button></div>
+                <div class="col-4"><button @click="currentAction = 'update'" class="admin-main-btn"><edit-icon
+                            width="1.5em" height="autho" /> Изменить фото</button></div>
+                <div class="col-4"><button @click="currentAction = 'delete'" class="admin-main-btn"><delete-icon
+                            width="1.5em" height="autho" /> Удалить фото</button></div>
             </div>
             <div class="row">
-                <div class="col-4"><button @click="currentAction = 'register'" class="admin-main-btn secondary"><add-account width="1.5em" height="autho" /> Новый админ</button></div>
-                <div class="col-4"><button @click="currentAction = 'profile'; loadProfile()" class="admin-main-btn profile-btn"><account-icon width="1em" height="autho" /> Мой профиль</button></div>
-                <div class="col-4"><button @click="handleLogout" class="admin-main-btn logout-btn" :disabled="loading"><door-exit width="1.5em" height="autho" /> <span>{{ loading ? 'Выход...' : 'Выйти' }}</span></button></div>
+                <div class="col-4"><button @click="currentAction = 'register'"
+                        class="admin-main-btn secondary"><add-account width="1.5em" height="autho" /> Новый
+                        админ</button></div>
+                <div class="col-4"><button @click="currentAction = 'profile'; loadProfile()"
+                        class="admin-main-btn profile-btn"><account-icon width="1em" height="autho" /> Мой
+                        профиль</button></div>
+                <div class="col-4"><button @click="handleLogout" class="admin-main-btn logout-btn"
+                        :disabled="loading"><door-exit width="1.5em" height="autho" /> <span>{{ loading ? 'Выход...' : 'Выйти' }}</span></button></div>
             </div>
         </div>
 
         <!-- Форма ДОБАВЛЕНИЯ -->
         <div v-if="currentAction === 'add'" class="admin-card p-4 col-12 col-md-6">
             <h3>Загрузка нового фото</h3>
-            <div class="drop-zone mb-3" @click="$refs.fileInput.click()" @dragover.prevent @drop.prevent="handleDrop" :class="{ 'dragging': isDragging }"
-                @dragenter="isDragging = true" @dragleave="isDragging = false">
+            <div class="drop-zone mb-3" @click="$refs.fileInput.click()" @dragover.prevent @drop.prevent="handleDrop"
+                :class="{ 'dragging': isDragging }" @dragenter="isDragging = true" @dragleave="isDragging = false">
                 <input type="file" @change="handleFileSelect" hidden ref="fileInput">
                 <p v-if="!uploadForm.file">Перетащите фото сюда или нажмите для выбора
                 </p>
-                <p v-else class="text-success d-flex align-items-center justify-content-center gap-2"><success-icon width="1.5em" height="autho" /> {{ uploadForm.file.name }}</p>
+                <p v-else class="text-success d-flex align-items-center justify-content-center gap-2"><success-icon
+                        width="1.5em" height="autho" /> {{ uploadForm.file.name }}</p>
             </div>
 
             <div class="mb-3">
@@ -341,37 +377,47 @@ export default {
         <!-- Форма ИЗМЕНЕНИЯ -->
         <div v-if="currentAction === 'update'" class="admin-card p-4 col-12 col-md-6">
             <h3>Изменение информации существующего фото</h3>
-            <input type="number" v-model="updateForm.id" class="form-control custom-input mb-3"
-                placeholder="Введите ID фото">
-
-            <div class="mb-3">
-                <label class="form-label">Дата</label>
-                <input type="date" v-model="updateForm.date" class="form-control custom-input">
+            <div v-if="!isPhotoLoaded">
+                <input type="number" v-model="updateForm.id" class="form-control custom-input mb-3" placeholder="Введите ID фото">
             </div>
 
-            <div class="row">
-                <div class="col-6 mb-3">
-                    <label class="form-label">Класс (1-11)</label>
-                    <select v-model="updateForm.grade" class="form-select custom-input">
-                        <option :value="null">Нет</option>
-                        <option v-for="n in 11" :key="n" :value="n">{{ n }}</option>
-                    </select>
-                </div>
-                <div class="col-6 mb-3">
-                    <label class="form-label">Параллель</label>
-                    <input type="text" v-model="updateForm.parallel" placeholder="Буква"
-                        class="form-control custom-input" maxlength="1">
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Описание</label>
-                <textarea v-model="updateForm.description" class="form-control custom-input" rows="3"></textarea>
-            </div>
-
-            <button @click="submitUpdate" class="btn-action w-100" :disabled="loading">
-                {{ loading ? 'Загрузка...' : 'Сохранить изменения' }}
+            <button v-if="!isPhotoLoaded" @click="fetchPhotoData" class="btn btn-primary" :disabled="loading">
+                {{ loading ? '...' : 'Загрузить' }}
             </button>
+            <button v-else @click="isPhotoLoaded = false; updateForm.id = null" class="btn btn-outline-warning">
+                Сброс
+            </button>
+
+            <div v-if="isPhotoLoaded">
+                <div class="mb-3">
+                    <label class="form-label">Дата</label>
+                    <input type="date" v-model="updateForm.date" class="form-control custom-input">
+                </div>
+
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Класс (1-11)</label>
+                        <select v-model="updateForm.grade" class="form-select custom-input">
+                            <option :value="null">Нет</option>
+                            <option v-for="n in 11" :key="n" :value="n">{{ n }}</option>
+                        </select>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Параллель</label>
+                        <input type="text" v-model="updateForm.parallel" placeholder="Буква"
+                            class="form-control custom-input" maxlength="1">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Описание</label>
+                    <textarea v-model="updateForm.description" class="form-control custom-input" rows="3"></textarea>
+                </div>
+
+                <button @click="submitUpdate" class="btn-action w-100" :disabled="loading">
+                    {{ loading ? 'Загрузка...' : 'Сохранить изменения' }}
+                </button>
+            </div>
         </div>
 
         <!-- Форма УДАЛЕНИЯ (по ID) -->
@@ -465,12 +511,14 @@ export default {
 
             <!-- Отдельная зона удаления -->
             <div class="danger-zone pt-3 border-top border-secondary mt-2">
-                <button @click="submitDeleteAccount" class="btn-delete-outline w-100 d-flex align-items-center justify-content-center gap-2" :disabled="loading">
+                <button @click="submitDeleteAccount"
+                    class="btn-delete-outline w-100 d-flex align-items-center justify-content-center gap-2"
+                    :disabled="loading">
                     <trash-bin width="1.5em" height="autho" /> Удалить мой аккаунт
                 </button>
             </div>
         </div>
-        
+
         <!-- Форма возврата -->
         <button v-if="currentAction" @click="currentAction = null" class="btn btn-outline-light mb-4">⬅ Назад</button>
     </div>
@@ -588,7 +636,7 @@ export default {
     transition: all 0.3s ease;
 
     &:hover {
-        background: #ff6b6b;
+        background: #38ffa2;
         color: white;
     }
 }

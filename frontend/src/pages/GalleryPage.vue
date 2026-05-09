@@ -172,7 +172,7 @@ export default {
     <div class="photo-gallery-container d-flex flex-column align-items-center gap-5">
         <img class="gallery-page-image" :src="image" alt="">
         <h1 class="gallery-title">Галерея фотографий</h1>
-        <div class="filters-container d-flex flex-wrap gap-3 mb-5 p-4 shadow-sm">
+        <div class="filters-container d-flex flex-wrap justify-content-center gap-3 mb-5 p-4 shadow-sm">
             <input v-model="filters.search" placeholder="Поиск по описанию..." class="form-control filter-input search">
 
             <select v-model="filters.grade" class="form-select filter-input">
@@ -186,6 +186,8 @@ export default {
             <div class="d-flex align-items-center gap-2">
                 <span>От:</span>
                 <input type="date" v-model="filters.dateFrom" class="form-control filter-input">
+            </div>
+            <div class="d-flex align-items-center gap-2">
                 <span>До:</span>
                 <input type="date" v-model="filters.dateTo" class="form-control filter-input">
             </div>
@@ -283,6 +285,10 @@ export default {
     margin-bottom: 1.5em;
     color: #F2ECDF;
     text-align: center;
+}
+
+.filters-container {
+    width: 80%;
 }
 
 /* Стили карточки */

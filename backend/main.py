@@ -21,8 +21,8 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(
-    title="MemoryGallery API",
-    description="API для сервиса MemoryGallery",
+    title="ArchiveGallery API",
+    description="API для сервиса ArchiveGallery",
     version="1.0.0",
     openapi_url="/api/v1/openapi.json",
     docs_url="/api/docs",
