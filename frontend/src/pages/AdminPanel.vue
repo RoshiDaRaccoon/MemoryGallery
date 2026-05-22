@@ -610,9 +610,14 @@ export default {
 }
 
 .profile-btn {
-    background-color: #4a90e2;
-    /* Синий оттенок для отличия */
+    background: none;
     border-color: #357abd;
+    color: #357abd;
+
+    &:hover {
+        background: #4a90e2;
+        color: white;
+    }
 }
 
 .btn-action.delete {
@@ -636,7 +641,7 @@ export default {
     transition: all 0.3s ease;
 
     &:hover {
-        background: #38ffa2;
+        background: #ff6b6b;
         color: white;
     }
 }

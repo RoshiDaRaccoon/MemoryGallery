@@ -38,7 +38,6 @@ async def register_first(user_data: UserCreateRequest, key: str, session: AsyncS
         return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 @router.post("/register",
-            response_model=Token,
             tags=["Auth"], 
             summary="Регистрация пользователя")
 async def register(user_data: UserCreateRequest, session: AsyncSession = Depends(get_session), credentials = Depends(auth_utils.bearer_scheme)):
